@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>🎯 Completa la Pregunta</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+      transition: background-color 0.5s ease;
+    }
+    input, button {
+      font-size: 18px;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 10px;
+      border: none;
+    }
+    .question {
+      font-size: 26px;
+      margin: 20px 0;
+    }
+    .feedback, .translation, .score {
+      font-size: 20px;
+      margin-top: 10px;
+    }
+    #verificar, #siguiente, #mostrarCorrecta {
+      margin-top: 20px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      display: none;
+    }
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🧠 Completa la Pregunta 🎓</h1>
+
+  <div class="question" id="pregunta"></div>
+
+  <input type="text" id="respuesta" placeholder="✍️ Escribe la palabra que falta" />
+  <br>
+  <button id="verificar" onclick="verificarRespuesta()">✅ Verificar</button>
+  <button id="siguiente" onclick="siguientePregunta()">➡️ Siguiente</button>
+  <button id="mostrarCorrecta" onclick="mostrarCorrecta()">👀 Mostrar respuesta</button>
+
+  <div class="feedback" id="feedback"></div>
+
+  <br><br>
+  <button onclick="mostrarTraduccion('eng')">🇺🇸 Inglés</button>
+  <button onclick="mostrarTraduccion('hin')">🇮🇳 Hindi</button>
+
+  <div class="translation" id="traduccion"></div>
+  <div class="score" id="score"></div>
+
+  <canvas id="confetti"></canvas>
+
+  <script>
+    const preguntas = [
+      { completa: "¿Qué te gusta comer?", incompleta: "____ te gusta comer?", respuesta: "Qué", eng: "What do you like to eat?", hin: "तुम्हें क्या खाना पसंद है?" },
+      { completa: "¿Dónde vives?", incompleta: "¿____ vives?", respuesta: "Dónde", eng: "Where do you live?", hin: "तुम कहाँ रहते हो?" },
+      { completa: "¿Cuándo es tu cumpleaños?", incompleta: "¿____ es tu cumpleaños?", respuesta: "Cuándo", eng: "When is your birthday?", hin: "तुम्हारा जन्मदिन कब है?" },
+      { completa: "¿Quién es tu profesor?", incompleta: "¿____ es tu profesor?", respuesta: "Quién", eng: "Who is your teacher?", hin: "तुम्हारे शिक्षक कौन हैं?" },
+      { completa: "¿Por qué estudias español?", incompleta: "¿____ estudias español?", respuesta: "Por qué", eng: "Why do you study Spanish?", hin: "तुम स्पेनिश क्यों पढ़ते हो?" },
+      { completa: "¿Cuántas personas hay en tu familia?", incompleta: "¿____ personas hay en tu familia?", respuesta: "Cuántas", eng: "How many people are in your family?", hin: "तुम्हारे परिवार में कितने लोग हैं?" },
+      { completa: "¿Cómo estás?", incompleta: "¿____ estás?", respuesta: "Cómo", eng: "How are you?", hin: "तुम कैसे हो?" },
+      { completa: "¿Cuántos años tienes?", incompleta: "¿____ años tienes?", respuesta: "Cuántos", eng: "How old are you?", hin: "तुम्हारी उम्र क्या है?" },
+      { completa: "¿A qué hora llegas?", incompleta: "¿A ____ hora llegas?", respuesta: "qué", eng: "What time do you arrive?", hin: "तुम कितने बजे आते हो?" },
+      { completa: "¿Con quién hablas?", incompleta: "¿Con ____ hablas?", respuesta: "quién", eng: "Who are you talking to?", hin: "तुम किससे बात कर रहे हो?" }
+    ];
+
+    const fondos = ["#d8f8d8", "#fff9c4", "#ffddc1", "#ffcdd2"];
+    let indiceActual = 0;
+    let aciertos = 0;
+    let fallos = 0;
+    let fallosPregunta = 0;
+
+    function cambiarFondo() {
+      const color = fondos[Math.floor(indiceActual / 2) % fondos.length];
+      document.body.style.backgroundColor = color;
+    }
+
+    function mostrarPregunta() {
+      cambiarFondo();
+      fallosPregunta = 0;
+      document.getElementById("pregunta").textContent = `📌 ${preguntas[indiceActual].incompleta}`;
+      document.getElementById("respuesta").value = "";
+      document.getElementById("feedback").textContent = "";
+      document.getElementById("traduccion").textContent = "";
+      document.getElementById("verificar").style.display = "inline-block";
+      document.getElementById("siguiente").style.display = "none";
+      document.getElementById("mostrarCorrecta").style.display = "none";
+    }
+
+    function verificarRespuesta() {
+      const entrada = document.getElementById("respuesta").value.trim().toLowerCase();
+      const correcta = preguntas[indiceActual].respuesta.toLowerCase();
+      const feedback = document.getElementById("feedback");
+
+      if (entrada === correcta) {
+        feedback.textContent = "🎉 ¡Correcto!";
+        feedback.style.color = "green";
+        aciertos++;
+        document.getElementById("verificar").style.display = "none";
+        document.getElementById("siguiente").style.display = "inline-block";
+        document.getElementById("mostrarCorrecta").style.display = "none";
+      } else {
+        feedback.textContent = "❌ Intenta otra vez.";
+        feedback.style.color = "red";
+        fallos++;
+        fallosPregunta++;
+
+        if (fallosPregunta >= 3) {
+          document.getElementById("mostrarCorrecta").style.display = "inline-block";
+        }
+      }
+    }
+
+    function mostrarCorrecta() {
+      document.getElementById("feedback").textContent = `✅ La respuesta correcta es: "${preguntas[indiceActual].respuesta}"`;
+      document.getElementById("verificar").style.display = "none";
+      document.getElementById("siguiente").style.display = "inline-block";
+      document.getElementById("mostrarCorrecta").style.display = "none";
+    }
+
+    function mostrarTraduccion(idioma) {
+      const p = preguntas[indiceActual];
+      const area = document.getElementById("traduccion");
+      area.textContent = idioma === "eng" ? "🗣 Inglés: " + p.eng : "🗣 Hindi: " + p.hin;
+    }
+
+    function siguientePregunta() {
+      indiceActual++;
+      if (indiceActual < preguntas.length) {
+        mostrarPregunta();
+      } else {
+        mostrarResultados();
+        lanzarConfeti();
+      }
+    }
+
+    function mostrarResultados() {
+      const total = aciertos + fallos;
+      const porcentaje = total === 0 ? 0 : Math.round((aciertos / total) * 100);
+      const nota = Math.round(porcentaje);
+      document.getElementById("pregunta").textContent = "🎉 ¡Juego terminado!";
+      document.getElementById("respuesta").style.display = "none";
+      document.getElementById("verificar").style.display = "none";
+      document.getElementById("siguiente").style.display = "none";
+      document.getElementById("mostrarCorrecta").style.display = "none";
+      document.getElementById("feedback").textContent = "";
+      document.getElementById("traduccion").textContent = "";
+      document.getElementById("score").innerHTML =
+        `✅ Aciertos: ${aciertos} <br>❌ Fallos: ${fallos} <br><br>🏁 Nota final: <strong>${nota}/100</strong> (${porcentaje}%) 🎯`;
+    }
+
+    function lanzarConfeti() {
+      const canvas = document.getElementById('confetti');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      let particles = Array.from({ length: 150 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height - canvas.height,
+        r: Math.random() * 6 + 4,
+        d: Math.random() * 150,
+        color: `hsl(${Math.random() * 360}, 100%, 70%)`,
+        tilt: Math.random() * 10 - 10,
+        tiltAngle: 0
+      }));
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let p of particles) {
+          ctx.beginPath();
+          ctx.fillStyle = p.color;
+          ctx.ellipse(p.x, p.y, p.r, p.r / 2, p.tilt, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        update();
+      }
+
+      function update() {
+        for (let p of particles) {
+          p.tilt += 0.1;
+          p.y += 2 + Math.cos(p.d);
+          p.x += Math.sin(p.d);
+          if (p.y > canvas.height) {
+            p.y = -20;
+            p.x = Math.random() * canvas.width;
+          }
+        }
+      }
+
+      setInterval(draw, 30);
+    }
+
+    // Inicializa el juego
+    document.getElementById("verificar").style.display = "inline-block";
+    mostrarPregunta();
+  </script>
+
+</body>
+</html>
